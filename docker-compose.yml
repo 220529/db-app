@@ -1,0 +1,29 @@
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    env_file:
+      - .env.dev
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # 设置 MySQL 根用户密码
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - mysql_db:/var/lib/mysql # 持久化数据
+    networks:
+      - app_network
+
+  adminer:
+    image: adminer:latest
+    restart: always
+    ports:
+      - 1097:8080 # 映射到本地端口
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+volumes:
+  mysql_db: # 定义持久化卷
+
+networks:
+  app_network: # 定义网络
