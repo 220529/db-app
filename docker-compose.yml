@@ -1,55 +1,68 @@
+version: '3.8'
+
 services:
-  db:
-    image: mysql:8.4.3 # 使用稳定版本的 MySQL
-    restart: always
-    env_file:
-      - .env
+  # MySQL 8.0 - 稳定版本
+  mysql:
+    image: mysql:8.0
+    container_name: dev-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root # MySQL 根用户密码
-      MYSQL_DATABASE: cms # 默认数据库名
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: erp_core
+      TZ: Asia/Shanghai
     volumes:
-      - mysql_db:/var/lib/mysql # 持久化 MySQL 数据
-      - ./init-scripts:/docker-entrypoint-initdb.d # 初始化 SQL 文件路径（可选）
-    ports:
-      - 3306:3306 # 映射 MySQL 默认端口（可选，方便调试）
+      # 数据持久化
+      - mysql_data:/var/lib/mysql
+      # 配置文件
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      # 初始化脚本（可选）
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
     networks:
-      - app_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3 # 最大重启次数
-  redis:  # 服务名称
-    image: redis:8.0.1  # 使用官方 Redis 镜像
-    container_name: my_redis  # 自定义容器名称（可选）
-    restart: always  # 容器崩溃时自动重启
+      - dev-network
+
+  # Redis - 用于缓存
+  redis:
+    image: redis:7-alpine
+    container_name: dev-redis
+    restart: unless-stopped
     ports:
-      - "6379:6379"  # 映射宿主机 6379 → 容器 6379（Redis 默认端口）
+      - "6379:6379"
     volumes:
-      - ./redis_data:/data  # 持久化数据到本地目录（可选）
-    command: redis-server --appendonly yes  # 启用 AOF 持久化（可选）
-  adminer:
-    image: adminer:latest
-    restart: always
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - dev-network
+
+  # phpMyAdmin - 可选的管理工具
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: dev-phpmyadmin
+    restart: unless-stopped
     ports:
-      - 1024:8080 # 映射到本地端口
+      - "8888:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 100M
     depends_on:
-      db:
-        condition: service_healthy # 依赖健康状态的服务
+      - mysql
     networks:
-      - app_network
-    deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3 # 最大重启次数
+      - dev-network
 
+# 数据卷 - 持久化存储
 volumes:
-  mysql_db: # 定义持久化卷
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
 
+# 网络
 networks:
-  app_network: # 定义网络
+  dev-network:
+    driver: bridge
