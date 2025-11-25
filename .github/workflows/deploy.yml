@@ -49,12 +49,12 @@ jobs:
             cd /app/db-app
             
             # 停止旧服务
-            docker-compose -f docker-compose.prod.yml down || true
+            docker compose -f docker-compose.prod.yml down || true
             
             # 启动新服务
-            docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
             
             # 查看状态
-            docker-compose -f docker-compose.prod.yml ps
+            docker compose -f docker-compose.prod.yml ps
             
             echo "✅ 数据库服务部署完成!"
