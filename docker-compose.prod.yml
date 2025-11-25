@@ -1,0 +1,96 @@
+# ==================== 生产环境配置 ====================
+# 使用方法: docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+# 特点: 强密码、生产环境命名、性能优化
+
+services:
+  # MySQL 8.0 - 生产环境
+  mysql:
+    image: mysql:8.0
+    container_name: erp-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      # 数据持久化
+      - mysql_data:/var/lib/mysql
+      # 配置文件
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      # 初始化脚本 (自动创建数据库和用户)
+      - ./mysql/init:/docker-entrypoint-initdb.d
+      # 备份目录
+      - ./backups:/backups
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+      # 生产环境性能优化
+      - --max_connections=500
+      - --innodb_buffer_pool_size=1G
+      # 慢查询日志
+      - --slow_query_log=1
+      - --slow_query_log_file=/var/lib/mysql/slow.log
+      - --long_query_time=2
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis - 生产环境
+  redis:
+    image: redis:7-alpine
+    container_name: erp-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server 
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # phpMyAdmin - 生产环境可选 (建议禁用)
+  # 如需启用,取消下面的注释
+  # phpmyadmin:
+  #   image: phpmyadmin:latest
+  #   container_name: erp-phpmyadmin
+  #   restart: unless-stopped
+  #   ports:
+  #     - "127.0.0.1:8888:80"  # 只允许本地访问
+  #   environment:
+  #     PMA_HOST: mysql
+  #     PMA_PORT: 3306
+  #     UPLOAD_LIMIT: 100M
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #   networks:
+  #     - erp-network
+
+# 数据卷 - 持久化存储
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# 网络
+networks:
+  erp-network:
+    driver: bridge
+    name: erp-db-network

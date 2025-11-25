@@ -1,7 +1,9 @@
-version: '3.8'
+# ==================== 本地开发环境配置 ====================
+# 使用方法: docker-compose up -d
+# 特点: 简单密码、开发环境命名、包含 phpMyAdmin
 
 services:
-  # MySQL 8.0 - 稳定版本
+  # MySQL 8.0 - 本地开发
   mysql:
     image: mysql:8.0
     container_name: dev-mysql
@@ -10,23 +12,32 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: erp_core
       TZ: Asia/Shanghai
     volumes:
       # 数据持久化
       - mysql_data:/var/lib/mysql
       # 配置文件
       - ./mysql/conf.d:/etc/mysql/conf.d
-      # 初始化脚本（可选）
+      # 初始化脚本 (自动创建数据库和用户)
       - ./mysql/init:/docker-entrypoint-initdb.d
+      # 备份目录
+      - ./backups:/backups
     command: 
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
+      # 本地开发配置
+      - --max_connections=200
+      - --innodb_buffer_pool_size=512M
     networks:
       - dev-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Redis - 用于缓存
+  # Redis - 本地开发
   redis:
     image: redis:7-alpine
     container_name: dev-redis
@@ -35,11 +46,17 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    # 本地开发可以不设密码,或使用简单密码
+    command: redis-server --appendonly yes --requirepass redis123
     networks:
       - dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # phpMyAdmin - 可选的管理工具
+  # phpMyAdmin - 数据库管理工具 (本地开发必备)
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: dev-phpmyadmin
@@ -50,8 +67,10 @@ services:
       PMA_HOST: mysql
       PMA_PORT: 3306
       UPLOAD_LIMIT: 100M
+      PMA_ARBITRARY: 1
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - dev-network
 
@@ -66,3 +85,4 @@ volumes:
 networks:
   dev-network:
     driver: bridge
+    name: dev-db-network

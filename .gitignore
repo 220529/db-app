@@ -1,2 +1,26 @@
+# 环境变量文件 (包含敏感信息)
 .env
+.env.local
+.env.prod
+.env.production
+
+# 数据目录
 mysql/data/
+mysql_data/
+redis_data/
+
+# 备份文件
+backups/
+*.sql
+*.sql.gz
+
+# 日志文件
+*.log
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
