@@ -32,18 +32,22 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
+          port: 22
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           source: "docker-compose.prod.yml,.env.prod,mysql"
           target: /app/db-app/
+          debug: true
 
       # 4. SSH 到服务器部署
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
+          port: 22
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
+          debug: true
           script: |
             cd /app/db-app
             
