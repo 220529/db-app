@@ -34,9 +34,9 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          source: db-app
-          target: /app
-          debug: true
+          source: "docker-compose.prod.yml,.env.prod,mysql"
+          target: /app/db-app/
+          strip_components: 0
 
       # 4. SSH 到服务器部署
       - name: Deploy on server
@@ -45,7 +45,6 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          debug: true
           script: |
             cd /app/db-app
             
