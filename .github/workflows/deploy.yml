@@ -1,0 +1,63 @@
+name: Deploy DB Services
+
+# 触发条件: 推送到 main 分支或手动触发
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'db-app/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 创建 .env.prod 文件 (从 GitHub Secrets 读取密码)
+      - name: Create .env.prod
+        run: |
+          cd db-app
+          cat > .env.prod << EOF
+          # MySQL 配置
+          MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+          
+          # Redis 配置
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          EOF
+
+      # 3. 上传配置文件到服务器
+      - name: Upload files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: "db-app/docker-compose.prod.yml,db-app/.env.prod,db-app/mysql"
+          target: /app/
+          strip_components: 1
+
+      # 4. SSH 到服务器部署
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd /app/db-app
+            
+            # 停止旧服务
+            docker-compose -f docker-compose.prod.yml down
+            
+            # 启动新服务
+            docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+            
+            # 查看状态
+            docker-compose -f docker-compose.prod.yml ps
+            
+            echo "✅ 数据库服务部署完成!"
