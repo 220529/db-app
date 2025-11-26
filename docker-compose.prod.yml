@@ -8,8 +8,9 @@ services:
     image: mysql:8.0
     container_name: erp-mysql
     restart: unless-stopped
-    ports:
-      - "3306:3306"
+    # 不对外暴露端口，只在 erp-db-network 内部通信
+    expose:
+      - "3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Shanghai
@@ -46,8 +47,9 @@ services:
     image: redis:7-alpine
     container_name: erp-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    # 不对外暴露端口，只在 erp-db-network 内部通信
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
     command: >
@@ -63,24 +65,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # phpMyAdmin - 生产环境可选 (建议禁用)
-  # 如需启用,取消下面的注释
-  # phpmyadmin:
-  #   image: phpmyadmin:latest
-  #   container_name: erp-phpmyadmin
-  #   restart: unless-stopped
-  #   ports:
-  #     - "127.0.0.1:8888:80"  # 只允许本地访问
-  #   environment:
-  #     PMA_HOST: mysql
-  #     PMA_PORT: 3306
-  #     UPLOAD_LIMIT: 100M
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy
-  #   networks:
-  #     - erp-network
 
 # 数据卷 - 持久化存储
 volumes:
