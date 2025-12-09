@@ -43,17 +43,16 @@ echo.
 
 REM 使用 SSH 密钥建立隧道（如果密钥存在）
 REM -N 参数：不执行远程命令，只做端口转发
+echo ====================================
+echo [OK] 隧道已建立，可以连接数据库了
+echo ====================================
+echo.
+echo [提示] 此窗口无输出表示连接正常，关闭窗口断开隧道
+echo.
+
 if exist "%SSH_KEY%" (
-    echo ====================================
-    echo 正在连接服务器...
-    echo ====================================
-    echo.
     ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=no -N -L %LOCAL_PORT%:localhost:%REMOTE_PORT% %SSH_USER%@%SERVER%
 ) else (
-    echo ====================================
-    echo 正在连接服务器（需要密码）...
-    echo ====================================
-    echo.
     ssh -N -L %LOCAL_PORT%:localhost:%REMOTE_PORT% %SSH_USER%@%SERVER%
 )
 
