@@ -16,10 +16,10 @@ docker-compose down
 
 ### 服务信息
 
-| 服务 | 地址 | 账号密码 |
-|------|------|---------|
-| MySQL | localhost:3306 | root / root |
-| Redis | localhost:6379 | redis123 |
+| 服务       | 地址                  | 账号密码    |
+| ---------- | --------------------- | ----------- |
+| MySQL      | localhost:3306        | root / root |
+| Redis      | localhost:6379        | redis123    |
 | phpMyAdmin | http://localhost:8888 | root / root |
 
 ### 自动创建的数据库
@@ -32,15 +32,19 @@ docker-compose down
 
 ## 🌐 生产部署
 
-```bash
-# 启动
-docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+通过 Git Tag 触发自动部署：
 
-# 停止
-docker-compose -f docker-compose.prod.yml down
+```bash
+git tag v1.0.0 && git push origin v1.0.0
 ```
 
-**配置**: 编辑 `.env.prod` 修改密码
+或在 GitHub Actions 页面手动触发 "Run workflow"
+
+### 手动部署
+
+```bash
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
 
 ---
 
@@ -67,7 +71,7 @@ docker exec -i dev-mysql mysql -uroot -proot erp_core < backup.sql
 编辑 `mysql/init/01-create-databases.sql`:
 
 ```sql
-CREATE DATABASE IF NOT EXISTS `your_db` 
+CREATE DATABASE IF NOT EXISTS `your_db`
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'your_user'@'%' IDENTIFIED BY 'your_password';
 GRANT ALL PRIVILEGES ON `your_db`.* TO 'your_user'@'%';
