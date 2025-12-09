@@ -49,4 +49,4 @@ git push origin %NEW_TAG%
 
 echo.
 echo ✅ 完成! GitHub Actions 将自动开始部署
-echo 查看进度: https://github.com/你的用户名/db-app/actions
+echo 查看进度: https://github.com/220529/db-app/actions

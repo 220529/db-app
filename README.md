@@ -16,11 +16,10 @@ docker-compose down
 
 ### 服务信息
 
-| 服务       | 地址                  | 账号密码    |
-| ---------- | --------------------- | ----------- |
-| MySQL      | localhost:3306        | root / root |
-| Redis      | localhost:6379        | redis123    |
-| phpMyAdmin | http://localhost:8888 | root / root |
+| 服务  | 地址           | 账号密码    |
+| ----- | -------------- | ----------- |
+| MySQL | localhost:3306 | root / root |
+| Redis | localhost:6379 | redis123    |
 
 ### 自动创建的数据库
 
